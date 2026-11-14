@@ -73,7 +73,7 @@ const en: Dict = {
       'Dim the lights in your room',
       'Brush your teeth and get tomorrow’s things ready',
     ],
-    hold: 'Hold: I’m in bed — good night',
+    hold: 'Hold: I’m in bed',
   },
   night: {
     goodNight: 'Good night',
