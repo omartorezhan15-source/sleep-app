@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
@@ -35,7 +35,9 @@ export function SleepDial({ bed, wake, onChange, goal, size = 300 }: Props) {
   const r = c - HANDLE / 2 - 4;
   const active = useRef<'bed' | 'wake' | null>(null);
   const latest = useRef({ bed, wake });
-  latest.current = { bed, wake };
+  useEffect(() => {
+    latest.current = { bed, wake };
+  }, [bed, wake]);
 
   const point = (min: number, radius = r) => {
     const a = toAngle(min);

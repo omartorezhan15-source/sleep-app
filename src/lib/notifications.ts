@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { Dict } from '@/i18n/ru';
@@ -23,7 +24,7 @@ export async function requestReminderPermission() {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNEL, {
       name: 'Bedtime',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: AndroidImportance.HIGH,
       vibrationPattern: [0, 120, 80, 120],
       lightColor: '#FFB86B',
     });
