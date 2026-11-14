@@ -63,3 +63,38 @@ export function SunGlyph({ size = 22, color = '#FFD27A' }: P) {
     </Svg>
   );
 }
+
+export function BoltIcon({ size = 22, color = night.accent }: P) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z" fill={color} />
+    </Svg>
+  );
+}
+
+export function SproutIcon({ size = 22, color = night.accent }: P) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 21v-9" stroke={color} strokeWidth={2} strokeLinecap="round" />
+      <Path d="M12 12c0-4 2.5-6.5 7-6.5 0 4.5-2.5 6.5-7 6.5z" fill={color} />
+      <Path d="M12 14.5c0-3-2-5-5.5-5 0 3.5 2 5 5.5 5z" fill={color} opacity={0.7} />
+    </Svg>
+  );
+}
+
+export function BookIcon({ size = 22, color = night.accent }: P) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M12 6.5C10 5 7.5 4.5 4 4.5v13c3.5 0 6 .5 8 2 2-1.5 4.5-2 8-2v-13c-3.5 0-6 .5-8 2z" stroke={color} strokeWidth={1.9} strokeLinejoin="round" />
+      <Path d="M12 6.5v13" stroke={color} strokeWidth={1.9} />
+    </Svg>
+  );
+}
+
+export function PulseIcon({ size = 22, color = night.accent }: P) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M2.5 12.5h4l2.5-6 4 12 2.5-6h6" stroke={color} strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
