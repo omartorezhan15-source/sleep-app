@@ -27,7 +27,11 @@ export function useDayPhase(now: Date): DayPhase {
   const asleep = !!rec?.bedAt && !rec?.wakeAt;
   const awake = !!rec?.wakeAt;
 
-  if (asleep) return inWindow(t, mod(wake - 60, 1440), mod(wake + 240, 1440)) ? 'morning' : 'inBed';
+  if (asleep) {
+    if (inWindow(t, mod(wake - 60, 1440), mod(wake + 240, 1440))) return 'morning';
+    // Ночь — от «за 3 часа до сна» до часа перед подъёмом. Позже — уже день, даже без отметки «Встаю».
+    return inWindow(t, mod(bed - 180, 1440), mod(wake - 60, 1440)) ? 'inBed' : 'day';
+  }
   if (awake) return inWindow(t, mod(bed - 60, 1440), bed) ? 'windDown' : 'day';
   if (inWindow(t, mod(bed - 60, 1440), bed)) return 'windDown';
   if (inWindow(t, bed, mod(wake - 60, 1440))) return 'bedtime';

@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -10,6 +10,8 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+
+import { useScreen } from '@/lib/useScreen';
 
 // Детерминированный генератор, чтобы звёзды не прыгали между рендерами.
 function rng(seed: number) {
@@ -30,7 +32,11 @@ const Twinkle = memo(function Twinkle({ star, dim }: { star: Star; dim: boolean 
       withRepeat(
         withSequence(
           withTiming(1, { duration: star.period, easing: Easing.inOut(Easing.sin), reduceMotion: ReduceMotion.System }),
-          withTiming(star.min, { duration: star.period, easing: Easing.inOut(Easing.sin), reduceMotion: ReduceMotion.System }),
+          withTiming(star.min, {
+            duration: star.period,
+            easing: Easing.inOut(Easing.sin),
+            reduceMotion: ReduceMotion.System,
+          }),
         ),
         -1,
       ),
@@ -57,7 +63,7 @@ const Twinkle = memo(function Twinkle({ star, dim }: { star: Star; dim: boolean 
 });
 
 export const Starfield = memo(function Starfield({ count = 80, dim = false }: { count?: number; dim?: boolean }) {
-  const { width, height } = useWindowDimensions();
+  const { width, height } = useScreen();
   const stars = useMemo(() => {
     const r = rng(42);
     return Array.from({ length: count }, (): Star => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
@@ -108,7 +108,8 @@ export function SleepDial({ bed, wake, onChange, goal, size = 300 }: Props) {
     <View style={{ alignItems: 'center' }}>
       <GestureDetector gesture={pan}>
         <View
-          style={{ width: size, height: size }}
+          // На вебе отключаем прокрутку/масштаб жестом поверх циферблата, иначе луну не потянуть пальцем.
+          style={[{ width: size, height: size }, Platform.OS === 'web' && ({ touchAction: 'none' } as object)]}
           accessible
           accessibilityRole="adjustable"
           accessibilityLabel={`${t.schedule.bed} ${formatClock(bed)}, ${t.schedule.wake} ${formatClock(wake)}`}
@@ -135,7 +136,14 @@ export function SleepDial({ bed, wake, onChange, goal, size = 300 }: Props) {
               />
             ))}
             {/* Свечение и сама дуга сна */}
-            <Path d={arc} stroke="url(#arc)" strokeOpacity={0.25} strokeWidth={HANDLE + 8} strokeLinecap="round" fill="none" />
+            <Path
+              d={arc}
+              stroke="url(#arc)"
+              strokeOpacity={0.25}
+              strokeWidth={HANDLE + 8}
+              strokeLinecap="round"
+              fill="none"
+            />
             <Path d={arc} stroke="url(#arc)" strokeWidth={HANDLE - 8} strokeLinecap="round" fill="none" />
             {labels.map((l) => (
               <SvgText

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -39,6 +39,7 @@ const GOALS: { key: Goal; Icon: typeof BoltIcon }[] = [
 ];
 const OBSTACLES: Obstacle[] = ['video', 'games', 'chat', 'study', 'thoughts'];
 const STEPS = 4;
+const canNotify = Platform.OS !== 'web';
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
@@ -66,7 +67,12 @@ export default function Onboarding() {
           <View style={{ width: 44, alignItems: 'flex-end' }}>{step === 0 && <LangToggle />}</View>
         </View>
 
-        <Animated.View key={step} entering={FadeInRight.duration(450)} exiting={FadeOutLeft.duration(250)} style={{ flex: 1 }}>
+        <Animated.View
+          key={step}
+          entering={FadeInRight.duration(450)}
+          exiting={FadeOutLeft.duration(250)}
+          style={{ flex: 1 }}
+        >
           {step === 0 && <Welcome onNext={next} />}
           {step === 1 && <Goals onNext={next} />}
           {step === 2 && <AgeAndTime onNext={next} />}
@@ -202,7 +208,11 @@ function AgeAndTime({ onNext }: { onNext: () => void }) {
 
   return (
     <View style={styles.page}>
-      <ScrollView contentContainerStyle={{ paddingBottom: space.md }} showsVerticalScrollIndicator={false} scrollEnabled={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: space.md }}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
+      >
         <AppText variant="title" align="center">
           {t.onboarding.ageTitle}
         </AppText>
@@ -254,7 +264,11 @@ function Plan() {
 
   return (
     <View style={styles.page}>
-      <ScrollView contentContainerStyle={{ paddingBottom: space.lg }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: space.lg }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <AppText variant="title">{t.onboarding.planTitle}</AppText>
         <AppText variant="caption" style={{ marginTop: 6, marginBottom: space.lg }}>
           {t.onboarding.planHint}
@@ -278,20 +292,31 @@ function Plan() {
                 placeholderTextColor={night.textMuted}
               />
             </Glass>
-
           </Animated.View>
         )}
       </ScrollView>
       <View style={{ gap: space.xs }}>
-        {!!obstacle && (
+        {!!obstacle && canNotify && (
           <Animated.View entering={FadeIn.duration(500)} style={styles.notify}>
             <AppText variant="caption" align="center" style={{ fontSize: 14, lineHeight: 19 }}>
               {t.onboarding.notifyText}
             </AppText>
           </Animated.View>
         )}
-        <PillButton label={t.onboarding.notifyAllow} onPress={() => finish(true)} disabled={!obstacle || busy} />
-        <PillButton kind="ghost" label={t.onboarding.notifySkip} onPress={() => finish(false)} disabled={!obstacle || busy} />
+        {canNotify ? (
+          <>
+            <PillButton label={t.onboarding.notifyAllow} onPress={() => finish(true)} disabled={!obstacle || busy} />
+            <PillButton
+              kind="ghost"
+              label={t.onboarding.notifySkip}
+              onPress={() => finish(false)}
+              disabled={!obstacle || busy}
+            />
+          </>
+        ) : (
+          // В браузере уведомлений по расписанию нет — просто завершаем.
+          <PillButton label={t.common.done} onPress={() => finish(false)} disabled={!obstacle || busy} />
+        )}
       </View>
     </View>
   );

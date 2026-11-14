@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,6 +12,7 @@ import { SkyBackground } from '@/components/SkyBackground';
 import { SleepChart, tsToMinutes, type ChartNight } from '@/components/SleepChart';
 import { formatDuration, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
+import { useScreen } from '@/lib/useScreen';
 import { addDaysKey, eveningMinutes, keyToDate, nightKey } from '@/lib/time';
 import { useApp } from '@/store/useApp';
 import { fonts, night, radius, space } from '@/theme';
@@ -20,7 +21,7 @@ type Range = 'week' | 'month';
 
 export default function Stats() {
   const { t, locale } = useT();
-  const { width } = useWindowDimensions();
+  const { width } = useScreen();
   const { nights, bed, wake, fullMoons } = useApp();
   const [range, setRange] = useState<Range>('week');
   const days = range === 'week' ? 7 : 30;
@@ -37,7 +38,8 @@ export default function Stats() {
       const d = keyToDate(key);
       out.push({
         key,
-        label: range === 'week' ? d.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '') : String(d.getDate()),
+        label:
+          range === 'week' ? d.toLocaleDateString(locale, { weekday: 'short' }).replace('.', '') : String(d.getDate()),
         bed: tsToMinutes(rec?.bedAt),
         wake: tsToMinutes(rec?.wakeAt),
         onTime: rec?.onTime,
@@ -49,7 +51,10 @@ export default function Stats() {
 
   const durations = data.map((d) => d.dur).filter((x): x is number => x !== undefined);
   const avg = durations.length ? durations.reduce((a, b) => a + b, 0) / durations.length : null;
-  const beds = data.map((d) => d.bed).filter((x): x is number => x !== undefined).map(eveningMinutes);
+  const beds = data
+    .map((d) => d.bed)
+    .filter((x): x is number => x !== undefined)
+    .map(eveningMinutes);
   // Регулярность — разброс времени отхода ко сну (стандартное отклонение).
   let reg: keyof typeof t.stats.reg = 'none';
   if (beds.length >= 3) {
@@ -84,7 +89,10 @@ export default function Stats() {
                 }}
                 style={[styles.segBtn, range === r && styles.segOn]}
               >
-                <AppText style={{ fontFamily: fonts.semibold, fontSize: 15 }} color={range === r ? night.onAccent : night.secondary}>
+                <AppText
+                  style={{ fontFamily: fonts.semibold, fontSize: 15 }}
+                  color={range === r ? night.onAccent : night.secondary}
+                >
                   {t.stats[r]}
                 </AppText>
               </Pressable>

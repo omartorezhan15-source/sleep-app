@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -67,7 +67,11 @@ export default function Settings() {
           <View style={{ width: 44 }} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <Section title={t.settings.language}>
             <View style={styles.segment}>
               {(['ru', 'en'] as const).map((l) => (
@@ -78,7 +82,10 @@ export default function Settings() {
                   onPress={() => setLocale(l)}
                   style={[styles.segBtn, app.locale === l && styles.segOn]}
                 >
-                  <AppText style={{ fontFamily: fonts.semibold }} color={app.locale === l ? night.onAccent : night.secondary}>
+                  <AppText
+                    style={{ fontFamily: fonts.semibold }}
+                    color={app.locale === l ? night.onAccent : night.secondary}
+                  >
                     {l === 'ru' ? 'Русский' : 'English'}
                   </AppText>
                 </Pressable>
@@ -138,18 +145,20 @@ export default function Settings() {
             </Glass>
           </Section>
 
-          <Glass>
-            <View style={styles.row}>
-              <AppText style={{ flex: 1, fontSize: 17 }}>{t.settings.reminders}</AppText>
-              <Switch
-                value={app.remindersOn}
-                onValueChange={toggleReminders}
-                trackColor={{ true: night.accent, false: 'rgba(165,168,240,0.25)' }}
-                thumbColor={night.text}
-                {...({ activeThumbColor: night.text } as object)}
-              />
-            </View>
-          </Glass>
+          {Platform.OS !== 'web' && (
+            <Glass>
+              <View style={styles.row}>
+                <AppText style={{ flex: 1, fontSize: 17 }}>{t.settings.reminders}</AppText>
+                <Switch
+                  value={app.remindersOn}
+                  onValueChange={toggleReminders}
+                  trackColor={{ true: night.accent, false: 'rgba(165,168,240,0.25)' }}
+                  thumbColor={night.text}
+                  {...({ activeThumbColor: night.text } as object)}
+                />
+              </View>
+            </Glass>
+          )}
 
           <Section title={t.settings.science}>
             <Glass>
@@ -171,7 +180,11 @@ export default function Settings() {
             }}
             style={styles.reset}
           >
-            <AppText align="center" color={confirmReset ? night.accent : 'rgba(165,168,240,0.5)'} style={{ fontSize: 15 }}>
+            <AppText
+              align="center"
+              color={confirmReset ? night.accent : 'rgba(165,168,240,0.5)'}
+              style={{ fontSize: 15 }}
+            >
               {confirmReset ? t.settings.resetConfirm : t.settings.reset}
             </AppText>
           </Pressable>
@@ -231,7 +244,15 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   big: { fontFamily: fonts.light, fontSize: 26, fontVariant: ['tabular-nums'] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  input: { color: night.text, fontFamily: fonts.regular, fontSize: 16, lineHeight: 23, minHeight: 96, padding: 0, textAlignVertical: 'top' },
+  input: {
+    color: night.text,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    lineHeight: 23,
+    minHeight: 96,
+    padding: 0,
+    textAlignVertical: 'top',
+  },
   small: {
     width: 42,
     height: 42,

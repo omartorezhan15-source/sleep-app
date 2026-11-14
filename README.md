@@ -23,7 +23,6 @@ Expo (React Native) приложение для iPhone и Android, которо�
 ```bash
 git clone https://github.com/omartorezhan15-source/sleep-app.git
 cd sleep-app
-git checkout claude/sleep-schedule-expo-app-f6nyyn   # пока MVP не влит в main
 npm install
 npx expo start
 ```
@@ -34,6 +33,17 @@ npx expo start
 
 Проект на Expo SDK 58: версия Expo Go из App Store должна поддерживать SDK 58 (это текущая версия).
 В Expo Go работают локальные уведомления; в вебе (`npx expo start --web`) уведомлений и вибрации нет.
+
+## Веб-версия (открыть с телефона по ссылке)
+
+```bash
+npm run build:web   # = npx expo export --platform web → папка dist/
+```
+
+Сайт деплоится на Vercel из ветки `main` (настройки в `vercel.json`: сборка `npm run build:web`, папка `dist`, все пути → `index.html`).
+В Safari на iPhone: «Поделиться» → «На экран Домой» — откроется на весь экран, как приложение.
+
+В браузере нет уведомлений и вибрации, поэтому на вебе экран напоминаний в онбординге и переключатель в настройках скрыты. Данные хранятся в браузере (localStorage).
 
 ## Проверки
 

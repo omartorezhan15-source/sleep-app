@@ -9,10 +9,11 @@ import { Glass } from '@/components/Glass';
 import { BackIcon } from '@/components/Icons';
 import { SkyBackground } from '@/components/SkyBackground';
 import { SleepDial } from '@/components/SleepDial';
-import { useT } from '@/i18n';
+import { fill, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
 import { scheduleReminders } from '@/lib/notifications';
 import { sleepGoalForAge } from '@/lib/sleepGoal';
+import { formatClock } from '@/lib/time';
 import { useApp } from '@/store/useApp';
 import { space } from '@/theme';
 
@@ -23,7 +24,12 @@ export default function Schedule() {
   const [wake, setWake] = useState(app.wake);
 
   const save = async () => {
-    app.set({ bed, wake });
+    // Неизменённый шаблон плана «если… то…» подстраиваем под новое время сна.
+    let plan = app.plan;
+    if (app.obstacle && plan === fill(t.planTemplates[app.obstacle], { time: formatClock(app.bed - 15) })) {
+      plan = fill(t.planTemplates[app.obstacle], { time: formatClock(bed - 15) });
+    }
+    app.set({ bed, wake, plan });
     if (app.remindersOn) await scheduleReminders(bed, wake, t).catch(() => {});
     haptic.success();
     router.back();

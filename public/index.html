@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <!-- viewport-fit=cover: контент под «чёлкой» iPhone; масштабирование выключено, как в нативном приложении -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <title>Luna</title>
+    <meta name="description" content="Luna — ложиться и вставать в одно и то же время." />
+    <meta name="theme-color" content="#0B1026" />
+    <meta name="color-scheme" content="dark" />
+    <!-- «На экран Домой» в Safari: открывается без адресной строки -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Luna" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+        background-color: #0b1026; /* без белой вспышки при загрузке */
+      }
+      body {
+        overflow: hidden;
+        overscroll-behavior: none; /* без «резинки» и pull-to-refresh */
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none; /* без меню при долгом нажатии (кнопка «Удерживай») */
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      input,
+      textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>Включите JavaScript, чтобы открыть Luna.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
