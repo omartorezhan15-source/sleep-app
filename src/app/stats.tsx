@@ -43,6 +43,7 @@ export default function Stats() {
         bed: tsToMinutes(rec?.bedAt),
         wake: tsToMinutes(rec?.wakeAt),
         onTime: rec?.onTime,
+        revoked: rec?.blockingRevoked,
         dur: rec?.bedAt && rec?.wakeAt ? (rec.wakeAt - rec.bedAt) / 60000 : undefined,
       });
     }
@@ -131,6 +132,7 @@ export default function Stats() {
                     <Legend color={night.accent} label={t.stats.onTime} />
                     <Legend color={night.secondary} label={t.stats.late} />
                     <Legend color="rgba(255,184,107,0.6)" label={t.stats.goal} dashed />
+                    {data.some((d) => d.revoked) && <Legend color={night.text} label={t.stats.revoked} />}
                   </View>
                 </>
               )}

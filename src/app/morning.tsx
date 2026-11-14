@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -13,6 +13,8 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
+import { useSvgId } from '@/lib/useSvgId';
+
 import { AppText } from '@/components/AppText';
 import { PillButton } from '@/components/Buttons';
 import { Glass } from '@/components/Glass';
@@ -20,11 +22,15 @@ import { Moon } from '@/components/Moon';
 import { SkyBackground, type SkyMode } from '@/components/SkyBackground';
 import { fill, formatDuration, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
-import { nightKey } from '@/lib/time';
+import { AUTO_UNLOCK_MIN, blockingStatus } from '@/lib/blocking';
+import { formatClock, nightKey } from '@/lib/time';
+import { useNow } from '@/lib/useNow';
 import { useApp } from '@/store/useApp';
 import { dawn, fonts, space } from '@/theme';
 
 function Sun() {
+  const ids = { sun: useSvgId('sun') };
+
   const rise = useSharedValue(0);
   useEffect(() => {
     rise.value = withDelay(400, withTiming(1, { duration: 2600, easing: Easing.out(Easing.cubic) }));
@@ -34,14 +40,14 @@ function Sun() {
     <Animated.View style={[{ alignItems: 'center' }, style]}>
       <Svg width={220} height={220}>
         <Defs>
-          <RadialGradient id="sun" cx="50%" cy="50%" r="50%">
+          <RadialGradient id={ids.sun} cx="50%" cy="50%" r="50%">
             <Stop offset="0" stopColor="#FFF3C4" />
             <Stop offset="0.32" stopColor="#FFD66B" />
             <Stop offset="0.36" stopColor="#FFC85A" stopOpacity={0.45} />
             <Stop offset="1" stopColor="#FFB86B" stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Circle cx={110} cy={110} r={110} fill="url(#sun)" />
+        <Circle cx={110} cy={110} r={110} fill={`url(#${ids.sun})`} />
       </Svg>
     </Animated.View>
   );
@@ -49,9 +55,13 @@ function Sun() {
 
 export default function Morning() {
   const { t } = useT();
-  const { nights, moonPhase, markWake } = useApp();
+  const { nights, moonPhase, markWake, wake, bed } = useApp();
   const [now] = useState(() => new Date());
+  const live = useNow();
   const rec = nights[nightKey(now)];
+  // Этап 2: сначала утреннее задание (оно снимает блокировку), через 60 минут после подъёма — снимается само.
+  const blocking = blockingStatus(live, bed, wake, rec);
+  const needTask = !rec?.taskDoneAt && blocking.phase !== 'unlockedAuto';
   const onTime = !!rec?.onTime;
   const slept = rec?.bedAt ? Math.max(0, (now.getTime() - rec.bedAt) / 60_000) : null;
 
@@ -102,6 +112,16 @@ export default function Morning() {
                 </View>
               </View>
             </Glass>
+            {rec?.blockingRevoked && (
+              <Glass tone="dawn">
+                <AppText color={dawn.text}>{t.morning.revoked}</AppText>
+              </Glass>
+            )}
+            {blocking.phase === 'unlockedAuto' && !rec?.taskDoneAt && (
+              <Glass tone="dawn">
+                <AppText color={dawn.text}>{t.morning.unlockedAuto}</AppText>
+              </Glass>
+            )}
             <Glass tone="dawn">
               <AppText color={dawn.text}>☀︎ {t.morning.light}</AppText>
             </Glass>
@@ -109,14 +129,25 @@ export default function Morning() {
         </View>
 
         <Animated.View entering={FadeIn.delay(1800).duration(600)} style={styles.footer}>
-          <PillButton
-            tone="dawn"
-            label={t.morning.up}
-            onPress={() => {
-              markWake();
-              router.replace('/home');
-            }}
-          />
+          {needTask ? (
+            <>
+              {Platform.OS !== 'web' && (
+                <AppText variant="caption" align="center" color={dawn.textSecondary} style={{ marginBottom: space.sm }}>
+                  {fill(t.morning.taskFirst, { time: formatClock(wake + AUTO_UNLOCK_MIN) })}
+                </AppText>
+              )}
+              <PillButton tone="dawn" label={t.task.start} onPress={() => router.push('/task')} />
+            </>
+          ) : (
+            <PillButton
+              tone="dawn"
+              label={t.morning.up}
+              onPress={() => {
+                markWake();
+                router.replace('/home');
+              }}
+            />
+          )}
         </Animated.View>
       </SafeAreaView>
     </SkyBackground>

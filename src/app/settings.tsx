@@ -12,6 +12,7 @@ import { SkyBackground } from '@/components/SkyBackground';
 import { MAX_AGE, MIN_AGE } from '@/components/AgeStepper';
 import { fill, formatRange, getDict, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
+import type { TaskType } from '@/lib/morningTask';
 import { cancelReminders, requestReminderPermission, scheduleReminders } from '@/lib/notifications';
 import { sleepGoalForAge } from '@/lib/sleepGoal';
 import { formatClock } from '@/lib/time';
@@ -19,6 +20,8 @@ import { useApp, type Goal } from '@/store/useApp';
 import { fonts, night, radius, space } from '@/theme';
 
 const GOALS: Goal[] = ['energy', 'growth', 'study', 'sport'];
+// Шагомера в браузере нет — на вебе это задание не предлагаем.
+const TASKS: TaskType[] = Platform.OS === 'web' ? ['sky', 'math'] : ['sky', 'math', 'steps'];
 
 export default function Settings() {
   const { t } = useT();
@@ -129,6 +132,19 @@ export default function Settings() {
             <View style={styles.chips}>
               {GOALS.map((g) => (
                 <Chip key={g} label={t.goals[g].title} selected={app.goals.includes(g)} onPress={() => toggleGoal(g)} />
+              ))}
+            </View>
+          </Section>
+
+          <Section title={t.task.choose}>
+            <View style={styles.chips}>
+              {TASKS.map((k) => (
+                <Chip
+                  key={k}
+                  label={t.task.names[k]}
+                  selected={app.taskType === k}
+                  onPress={() => app.set({ taskType: k })}
+                />
               ))}
             </View>
           </Section>

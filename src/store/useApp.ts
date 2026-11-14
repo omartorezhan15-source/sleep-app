@@ -2,10 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+
 import { deviceLocale } from '@/lib/locale';
+import type { TaskType } from '@/lib/morningTask';
 import { addDaysKey, eveningMinutes, minutesOfDay, nightKey } from '@/lib/time';
 
 export type Goal = 'energy' | 'growth' | 'study' | 'sport';
+
 export type Obstacle = 'video' | 'games' | 'chat' | 'study' | 'thoughts';
 
 export type NightRecord = {
@@ -14,6 +17,12 @@ export type NightRecord = {
   targetBed: number; // минуты дня, цель на эту ночь
   targetWake: number;
   onTime?: boolean;
+  /** Утреннее задание выполнено — блокировка снята (этап 2). */
+  taskDoneAt?: number;
+  /** Сколько раз отложили будильник (максимум 1). */
+  snoozes?: number;
+  /** Блокировку отключили в системных Настройках этой ночью (сообщает нативная часть iPhone). */
+  blockingRevoked?: boolean;
 };
 
 export const MOON_MAX = 14;
@@ -31,6 +40,7 @@ type State = {
   bed: number;
   wake: number;
   remindersOn: boolean;
+  taskType: TaskType;
   moonPhase: number; // 1..14
   fullMoons: number;
   nights: Record<string, NightRecord>;
@@ -43,6 +53,8 @@ type Actions = {
   markBed: (now?: Date) => { onTime: boolean };
   undoBed: (now?: Date) => void;
   markWake: (now?: Date) => void;
+  completeTask: (now?: Date) => void;
+  markSnooze: (now?: Date) => void;
   processMissedNights: (now?: Date) => void;
   reset: () => void;
 };
@@ -56,6 +68,7 @@ const initial: Omit<State, 'hydrated' | 'locale'> = {
   bed: 22 * 60,
   wake: 7 * 60,
   remindersOn: false,
+  taskType: 'sky',
   moonPhase: 1,
   fullMoons: 0,
   nights: {},
@@ -123,6 +136,20 @@ export const useApp = create<State & Actions>()(
         const key = nightKey(now);
         const rec = s.nights[key] ?? { targetBed: s.bed, targetWake: s.wake };
         set({ nights: { ...s.nights, [key]: { ...rec, wakeAt: now.getTime() } } });
+      },
+
+      completeTask: (now = new Date()) => {
+        const s = get();
+        const key = nightKey(now);
+        const rec = s.nights[key] ?? { targetBed: s.bed, targetWake: s.wake };
+        set({ nights: { ...s.nights, [key]: { ...rec, taskDoneAt: now.getTime() } } });
+      },
+
+      markSnooze: (now = new Date()) => {
+        const s = get();
+        const key = nightKey(now);
+        const rec = s.nights[key] ?? { targetBed: s.bed, targetWake: s.wake };
+        set({ nights: { ...s.nights, [key]: { ...rec, snoozes: (rec.snoozes ?? 0) + 1 } } });
       },
 
       /** Прошедшие ночи без отметки — луна убывает на одну фазу за каждую. */

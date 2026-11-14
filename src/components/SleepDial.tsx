@@ -3,6 +3,8 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
+import { useSvgId } from '@/lib/useSvgId';
+
 import { formatDuration, formatRange, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
 import { judgeDuration, type SleepGoal } from '@/lib/sleepGoal';
@@ -30,6 +32,8 @@ const toAngle = (min: number) => (min / DAY) * Math.PI * 2 - Math.PI / 2;
  * между ними светится дуга сна, в центре — длительность.
  */
 export function SleepDial({ bed, wake, onChange, goal, size = 300 }: Props) {
+  const ids = { arc: useSvgId('arc') };
+
   const { t, f } = useT();
   const c = size / 2;
   const r = c - HANDLE / 2 - 4;
@@ -116,7 +120,7 @@ export function SleepDial({ bed, wake, onChange, goal, size = 300 }: Props) {
         >
           <Svg width={size} height={size}>
             <Defs>
-              <LinearGradient id="arc" x1={pb.x} y1={pb.y} x2={pw.x} y2={pw.y} gradientUnits="userSpaceOnUse">
+              <LinearGradient id={ids.arc} x1={pb.x} y1={pb.y} x2={pw.x} y2={pw.y} gradientUnits="userSpaceOnUse">
                 <Stop offset="0" stopColor={night.secondary} />
                 <Stop offset="1" stopColor={night.accent} />
               </LinearGradient>
@@ -138,13 +142,13 @@ export function SleepDial({ bed, wake, onChange, goal, size = 300 }: Props) {
             {/* Свечение и сама дуга сна */}
             <Path
               d={arc}
-              stroke="url(#arc)"
+              stroke={`url(#${ids.arc})`}
               strokeOpacity={0.25}
               strokeWidth={HANDLE + 8}
               strokeLinecap="round"
               fill="none"
             />
-            <Path d={arc} stroke="url(#arc)" strokeWidth={HANDLE - 8} strokeLinecap="round" fill="none" />
+            <Path d={arc} stroke={`url(#${ids.arc})`} strokeWidth={HANDLE - 8} strokeLinecap="round" fill="none" />
             {labels.map((l) => (
               <SvgText
                 key={l.h}

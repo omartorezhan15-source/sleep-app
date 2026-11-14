@@ -13,6 +13,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 
+import { useSvgId } from '@/lib/useSvgId';
+
 import { MOON_MAX } from '@/store/useApp';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -29,6 +31,8 @@ type Props = { phase: number; size?: number; glow?: boolean; tone?: 'night' | 'p
  * (неосвещённая часть), форма которой зависит от фазы и анимируется пружиной.
  */
 export function Moon({ phase, size = 220, glow = true, tone = 'night' }: Props) {
+  const ids = { halo: useSvgId('halo'), lit: useSvgId('lit') };
+
   const f = useSharedValue(phaseToFraction(phase));
   const breath = useSharedValue(0);
 
@@ -73,25 +77,25 @@ export function Moon({ phase, size = 220, glow = true, tone = 'night' }: Props) 
         <Animated.View style={[{ position: 'absolute', width: box, height: box }, glowStyle]}>
           <Svg width={box} height={box}>
             <Defs>
-              <RadialGradient id="halo" cx="50%" cy="50%" r="50%">
+              <RadialGradient id={ids.halo} cx="50%" cy="50%" r="50%">
                 <Stop offset="0.5" stopColor="#FFB86B" stopOpacity={pale ? 0.12 : 0.28} />
                 <Stop offset="0.75" stopColor="#FFB86B" stopOpacity={pale ? 0.04 : 0.09} />
                 <Stop offset="1" stopColor="#FFB86B" stopOpacity={0} />
               </RadialGradient>
             </Defs>
-            <Circle cx={c} cy={c} r={c} fill="url(#halo)" />
+            <Circle cx={c} cy={c} r={c} fill={`url(#${ids.halo})`} />
           </Svg>
         </Animated.View>
       )}
       <Svg width={box} height={box} style={{ position: 'absolute' }}>
         <Defs>
-          <RadialGradient id="lit" cx="42%" cy="38%" r="65%">
+          <RadialGradient id={ids.lit} cx="42%" cy="38%" r="65%">
             <Stop offset="0" stopColor={pale ? '#FFF8EC' : '#FFF4DE'} />
             <Stop offset="0.7" stopColor={pale ? '#F7E6CF' : '#F6DFB4'} />
             <Stop offset="1" stopColor={pale ? '#EBD3B5' : '#E9C48C'} />
           </RadialGradient>
         </Defs>
-        <Circle cx={c} cy={c} r={r} fill="url(#lit)" />
+        <Circle cx={c} cy={c} r={r} fill={`url(#${ids.lit})`} />
         {/* «Моря» — едва заметные пятна */}
         <Circle cx={c - r * 0.25} cy={c - r * 0.2} r={r * 0.22} fill="#D9B98A" opacity={0.35} />
         <Circle cx={c + r * 0.22} cy={c + r * 0.05} r={r * 0.16} fill="#D9B98A" opacity={0.3} />
