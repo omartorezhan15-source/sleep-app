@@ -18,6 +18,7 @@ import { haptic } from '@/lib/haptics';
 import { MATH_COUNT, MIN_BRIGHTNESS, STEPS_GOAL, jpegBrightness, mathProblems } from '@/lib/morningTask';
 import { nightKey } from '@/lib/time';
 import { useDayPhase, useNow } from '@/lib/useNow';
+import { onMorningTaskDone } from '@/native/nightPlan';
 import { useApp } from '@/store/useApp';
 import { dawn, fonts, radius, space } from '@/theme';
 
@@ -33,6 +34,8 @@ export default function Task() {
 
   const finish = () => {
     completeTask();
+    // На iPhone: снять блокировку сразу и отменить сегодняшние звонки будильника.
+    onMorningTaskDone().catch(() => {});
     haptic.success();
     setJustDone(true);
   };

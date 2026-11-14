@@ -14,6 +14,7 @@ import { haptic } from '@/lib/haptics';
 import { scheduleReminders } from '@/lib/notifications';
 import { sleepGoalForAge } from '@/lib/sleepGoal';
 import { formatClock } from '@/lib/time';
+import { syncNightPlan } from '@/native/nightPlan';
 import { useApp } from '@/store/useApp';
 import { space } from '@/theme';
 
@@ -31,6 +32,7 @@ export default function Schedule() {
     }
     app.set({ bed, wake, plan });
     if (app.remindersOn) await scheduleReminders(bed, wake, t).catch(() => {});
+    await syncNightPlan().catch(() => {});
     haptic.success();
     router.back();
   };

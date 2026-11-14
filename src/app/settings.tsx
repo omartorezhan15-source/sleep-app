@@ -11,11 +11,15 @@ import { BackIcon } from '@/components/Icons';
 import { SkyBackground } from '@/components/SkyBackground';
 import { MAX_AGE, MIN_AGE } from '@/components/AgeStepper';
 import { fill, formatRange, getDict, useT } from '@/i18n';
+import { AUTO_UNLOCK_MIN } from '@/lib/blocking';
 import { haptic } from '@/lib/haptics';
 import type { TaskType } from '@/lib/morningTask';
 import { cancelReminders, requestReminderPermission, scheduleReminders } from '@/lib/notifications';
 import { sleepGoalForAge } from '@/lib/sleepGoal';
 import { formatClock } from '@/lib/time';
+import { alarm } from '@/native/alarm';
+import { blocking } from '@/native/blocking';
+import { enableAlarm, enableBlocking, nativeAvailable } from '@/native/nightPlan';
 import { useApp, type Goal } from '@/store/useApp';
 import { fonts, night, radius, space } from '@/theme';
 
@@ -176,6 +180,10 @@ export default function Settings() {
             </Glass>
           )}
 
+          <Section title={t.blocking.section}>
+            <BlockingSettings />
+          </Section>
+
           <Section title={t.settings.science}>
             <Glass>
               <AppText variant="caption">{t.settings.scienceText}</AppText>
@@ -207,6 +215,75 @@ export default function Settings() {
         </ScrollView>
       </SafeAreaView>
     </SkyBackground>
+  );
+}
+
+// ВРЕМЕННЫЙ блок (этап 2): дизайн — DESIGN_BRIEF.md, раздел 2.
+function BlockingSettings() {
+  const { t, f } = useT();
+  const app = useApp();
+  const [msg, setMsg] = useState<string | null>(null);
+  const unlock = formatClock(app.wake + AUTO_UNLOCK_MIN);
+  const rules = f(t.blocking.rules, { bed: formatClock(app.bed), unlock });
+
+  if (!nativeAvailable()) {
+    return (
+      <Glass>
+        <AppText variant="caption">{rules}</AppText>
+        <AppText variant="caption" style={{ marginTop: space.sm }} color={night.accent}>
+          {t.blocking.onlyIphone}
+        </AppText>
+      </Glass>
+    );
+  }
+
+  const row = (label: string, on: boolean, onEnable: () => Promise<string>, disabledReason?: string) => (
+    <View style={[styles.row, { marginTop: space.sm }]}>
+      <View style={{ flex: 1 }}>
+        <AppText style={{ fontSize: 16 }}>{label}</AppText>
+        <AppText variant="caption" style={{ fontSize: 13 }} color={on ? night.accent : undefined}>
+          {disabledReason ?? (on ? t.blocking.on : t.blocking.off)}
+        </AppText>
+      </View>
+      {!on && !disabledReason && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={async () => {
+            haptic.tick();
+            const res = await onEnable();
+            setMsg(res === 'approved' || res === 'authorized' ? null : t.blocking.denied);
+          }}
+          style={styles.enable}
+        >
+          <AppText style={{ fontFamily: fonts.semibold, fontSize: 15 }} color={night.onAccent}>
+            {t.blocking.enable}
+          </AppText>
+        </Pressable>
+      )}
+    </View>
+  );
+
+  return (
+    <Glass>
+      <AppText variant="caption">{rules}</AppText>
+      {row(
+        t.blocking.blockingRow,
+        app.blockingEnabled,
+        enableBlocking,
+        blocking.isAvailable() ? undefined : t.blocking.onlyIphone,
+      )}
+      {row(
+        t.blocking.alarmRow,
+        app.alarmEnabled,
+        enableAlarm,
+        alarm.isAvailable() ? undefined : t.blocking.alarmUnsupported,
+      )}
+      {msg && (
+        <AppText variant="caption" style={{ marginTop: space.sm }} color={night.accent}>
+          {msg}
+        </AppText>
+      )}
+    </Glass>
   );
 }
 
@@ -280,4 +357,12 @@ const styles = StyleSheet.create({
     borderColor: night.glassBorder,
   },
   reset: { padding: space.md },
+  enable: {
+    height: 38,
+    paddingHorizontal: 16,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: night.accent,
+  },
 });

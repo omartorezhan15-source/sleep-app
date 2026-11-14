@@ -10,9 +10,10 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { syncNightPlan } from '@/native/nightPlan';
 import { useApp } from '@/store/useApp';
 import { night } from '@/theme';
 
@@ -30,10 +31,18 @@ export default function RootLayout() {
   const ready = fontsLoaded && hydrated;
 
   useEffect(() => {
-    if (ready) {
-      useApp.getState().processMissedNights();
-      SplashScreen.hideAsync();
-    }
+    if (!ready) return;
+    useApp.getState().processMissedNights();
+    SplashScreen.hideAsync();
+    // iPhone: при запуске и каждом возвращении в приложение сверяем блокировку и будильники с расписанием.
+    syncNightPlan().catch(() => {});
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') {
+        useApp.getState().processMissedNights();
+        syncNightPlan().catch(() => {});
+      }
+    });
+    return () => sub.remove();
   }, [ready]);
 
   if (!ready) return null;

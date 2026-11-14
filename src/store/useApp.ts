@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-
 import { deviceLocale } from '@/lib/locale';
 import type { TaskType } from '@/lib/morningTask';
 import { addDaysKey, eveningMinutes, minutesOfDay, nightKey } from '@/lib/time';
@@ -41,6 +40,9 @@ type State = {
   wake: number;
   remindersOn: boolean;
   taskType: TaskType;
+  /** Этап 2 (iPhone): блокировка и будильник включены пользователем. */
+  blockingEnabled: boolean;
+  alarmEnabled: boolean;
   moonPhase: number; // 1..14
   fullMoons: number;
   nights: Record<string, NightRecord>;
@@ -55,6 +57,7 @@ type Actions = {
   markWake: (now?: Date) => void;
   completeTask: (now?: Date) => void;
   markSnooze: (now?: Date) => void;
+  markBlockingRevoked: (now?: Date) => void;
   processMissedNights: (now?: Date) => void;
   reset: () => void;
 };
@@ -69,6 +72,8 @@ const initial: Omit<State, 'hydrated' | 'locale'> = {
   wake: 7 * 60,
   remindersOn: false,
   taskType: 'sky',
+  blockingEnabled: false,
+  alarmEnabled: false,
   moonPhase: 1,
   fullMoons: 0,
   nights: {},
@@ -150,6 +155,13 @@ export const useApp = create<State & Actions>()(
         const key = nightKey(now);
         const rec = s.nights[key] ?? { targetBed: s.bed, targetWake: s.wake };
         set({ nights: { ...s.nights, [key]: { ...rec, snoozes: (rec.snoozes ?? 0) + 1 } } });
+      },
+
+      markBlockingRevoked: (now = new Date()) => {
+        const s = get();
+        const key = nightKey(now);
+        const rec = s.nights[key] ?? { targetBed: s.bed, targetWake: s.wake };
+        set({ nights: { ...s.nights, [key]: { ...rec, blockingRevoked: true } } });
       },
 
       /** Прошедшие ночи без отметки — луна убывает на одну фазу за каждую. */

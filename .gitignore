@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Расширения iOS копирует плагин react-native-device-activity при prebuild
+/targets
