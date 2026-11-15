@@ -1,25 +1,16 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-
-import { useSvgId } from '@/lib/useSvgId';
 
 import { AppText } from '@/components/AppText';
 import { PillButton } from '@/components/Buttons';
 import { Glass } from '@/components/Glass';
 import { Moon } from '@/components/Moon';
 import { SkyBackground, type SkyMode } from '@/components/SkyBackground';
+import { Sun } from '@/components/Sun';
+import { TaskBadge } from '@/components/TaskPicker';
 import { fill, formatDuration, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
 import { AUTO_UNLOCK_MIN, blockingStatus } from '@/lib/blocking';
@@ -28,34 +19,9 @@ import { useNow } from '@/lib/useNow';
 import { useApp } from '@/store/useApp';
 import { dawn, fonts, space } from '@/theme';
 
-function Sun() {
-  const ids = { sun: useSvgId('sun') };
-
-  const rise = useSharedValue(0);
-  useEffect(() => {
-    rise.value = withDelay(400, withTiming(1, { duration: 2600, easing: Easing.out(Easing.cubic) }));
-  }, [rise]);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - rise.value) * 160 }], opacity: rise.value }));
-  return (
-    <Animated.View style={[{ alignItems: 'center' }, style]}>
-      <Svg width={220} height={220}>
-        <Defs>
-          <RadialGradient id={ids.sun} cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor="#FFF3C4" />
-            <Stop offset="0.32" stopColor="#FFD66B" />
-            <Stop offset="0.36" stopColor="#FFC85A" stopOpacity={0.45} />
-            <Stop offset="1" stopColor="#FFB86B" stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Circle cx={110} cy={110} r={110} fill={`url(#${ids.sun})`} />
-      </Svg>
-    </Animated.View>
-  );
-}
-
 export default function Morning() {
   const { t } = useT();
-  const { nights, moonPhase, markWake, wake, bed } = useApp();
+  const { nights, moonPhase, markWake, wake, bed, taskType } = useApp();
   const [now] = useState(() => new Date());
   const live = useNow();
   const rec = nights[nightKey(now)];
@@ -84,8 +50,10 @@ export default function Morning() {
     <SkyBackground mode={mode}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.body}>
-          <Sun />
-          <Animated.View entering={FadeInDown.delay(900).duration(800)} style={{ marginTop: -70 }}>
+          <View style={styles.sun}>
+            <Sun size={250} />
+          </View>
+          <Animated.View entering={FadeInDown.delay(900).duration(800)}>
             <AppText variant="title" align="center" color={dawn.text} style={{ fontSize: 36, lineHeight: 44 }}>
               {t.morning.hello}
             </AppText>
@@ -131,11 +99,24 @@ export default function Morning() {
         <Animated.View entering={FadeIn.delay(1800).duration(600)} style={styles.footer}>
           {needTask ? (
             <>
-              {Platform.OS !== 'web' && (
-                <AppText variant="caption" align="center" color={dawn.textSecondary} style={{ marginBottom: space.sm }}>
-                  {fill(t.morning.taskFirst, { time: formatClock(wake + AUTO_UNLOCK_MIN) })}
-                </AppText>
-              )}
+              <Glass tone="dawn" padded={false} style={{ marginBottom: space.sm }}>
+                <View style={styles.taskCard}>
+                  <TaskBadge type={taskType} tone="dawn" />
+                  <View style={{ flex: 1 }}>
+                    <AppText variant="label" color={dawn.textSecondary} style={{ fontSize: 11 }}>
+                      {t.morning.taskCard}
+                    </AppText>
+                    <AppText color={dawn.text} style={{ fontSize: 18 }}>
+                      {t.task.names[taskType]}
+                    </AppText>
+                    {Platform.OS !== 'web' && (
+                      <AppText variant="caption" color={dawn.textSecondary} style={{ fontSize: 13, lineHeight: 18 }}>
+                        {fill(t.morning.taskFirst, { time: formatClock(wake + AUTO_UNLOCK_MIN) })}
+                      </AppText>
+                    )}
+                  </View>
+                </View>
+              </Glass>
               <PillButton tone="dawn" label={t.task.start} onPress={() => router.push('/task')} />
             </>
           ) : (
@@ -155,7 +136,9 @@ export default function Morning() {
 }
 
 const styles = StyleSheet.create({
-  body: { flex: 1, paddingHorizontal: space.lg, justifyContent: 'center' },
+  body: { flex: 1, paddingHorizontal: space.lg },
+  sun: { alignItems: 'center', marginTop: -6, marginBottom: -34 },
+  taskCard: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18, paddingVertical: 14 },
   slept: { marginTop: 4, fontFamily: fonts.light, fontSize: 20 },
   result: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 22, paddingVertical: 18 },
   footer: { paddingHorizontal: space.lg, paddingBottom: space.md },

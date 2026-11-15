@@ -62,7 +62,17 @@ export function PillButton({ label, onPress, kind = 'primary', tone = 'night', d
   );
 }
 
-export function IconButton({ children, onPress, label }: { children: ReactNode; onPress: () => void; label: string }) {
+export function IconButton({
+  children,
+  onPress,
+  label,
+  tone = 'night',
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  label: string;
+  tone?: 'night' | 'dawn';
+}) {
   const p = usePressScale();
   return (
     <APressable
@@ -75,7 +85,7 @@ export function IconButton({ children, onPress, label }: { children: ReactNode; 
         haptic.tick();
         onPress();
       }}
-      style={[styles.icon, p.style]}
+      style={[styles.icon, tone === 'dawn' && styles.iconDawn, p.style]}
     >
       <View>{children}</View>
     </APressable>
@@ -101,4 +111,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: night.glassBorder,
   },
+  iconDawn: { backgroundColor: 'rgba(255,255,255,0.4)', borderColor: 'rgba(255,255,255,0.6)' },
 });

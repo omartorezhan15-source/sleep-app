@@ -27,7 +27,11 @@ function StepBtn({ sign, onPress, disabled }: { sign: string; onPress: () => voi
 
 export function AgeStepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return (
-    <View style={styles.row} accessibilityRole="adjustable" accessibilityValue={{ now: value, min: MIN_AGE, max: MAX_AGE }}>
+    <View
+      style={styles.row}
+      accessibilityRole="adjustable"
+      accessibilityValue={{ now: value, min: MIN_AGE, max: MAX_AGE }}
+    >
       <StepBtn sign="−" disabled={value <= MIN_AGE} onPress={() => onChange(Math.max(MIN_AGE, value - 1))} />
       <AppText style={styles.value}>{value}</AppText>
       <StepBtn sign="+" disabled={value >= MAX_AGE} onPress={() => onChange(Math.min(MAX_AGE, value + 1))} />

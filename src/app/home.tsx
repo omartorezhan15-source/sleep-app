@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,13 +9,14 @@ import { AppText } from '@/components/AppText';
 import { BigDuration } from '@/components/BigDuration';
 import { IconButton, PillButton } from '@/components/Buttons';
 import { Glass } from '@/components/Glass';
-import { ChartIcon, MoonGlyph, SlidersIcon, SunGlyph } from '@/components/Icons';
+import { ChartIcon, MoonGlyph, PhoneSleepIcon, SlidersIcon, SunGlyph } from '@/components/Icons';
 import { Moon } from '@/components/Moon';
 import { SkyBackground } from '@/components/SkyBackground';
 import { formatDuration, useT } from '@/i18n';
 import { factOfDay } from '@/lib/facts';
 import { formatClock, minutesUntil, sleepDuration } from '@/lib/time';
 import { isDawnTime, useDayPhase, useNow } from '@/lib/useNow';
+import { blocking } from '@/native/blocking';
 import { MOON_MAX, useApp } from '@/store/useApp';
 import { dawn, fonts, night, space } from '@/theme';
 
@@ -23,7 +24,8 @@ export default function Home() {
   const { t, f } = useT();
   const now = useNow();
   const phase = useDayPhase(now);
-  const { bed, wake, moonPhase, plan, goals } = useApp();
+  const { bed, wake, moonPhase, plan, goals, blockingEnabled } = useApp();
+  const [moonHint, setMoonHint] = useState(false);
 
   useEffect(() => {
     if (phase === 'inBed') router.replace('/night');
@@ -45,11 +47,27 @@ export default function Home() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={FadeIn.duration(900)} style={styles.moonWrap}>
-            <Moon phase={moonPhase} size={176} tone={dawnMode ? 'pale' : 'night'} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t.moon.hint}
+              onPress={() => setMoonHint((v) => !v)}
+            >
+              <Moon phase={moonPhase} size={176} tone={dawnMode ? 'pale' : 'night'} />
+            </Pressable>
           </Animated.View>
           <AppText variant="label" align="center" color={pal.textSecondary} style={styles.phase}>
             {moonPhase >= MOON_MAX ? t.moon.full : f(t.moon.phase, { n: moonPhase })}
           </AppText>
+
+          {moonHint && (
+            <Animated.View entering={FadeIn.duration(300)} style={{ marginBottom: space.md }}>
+              <Glass tone={tone}>
+                <AppText variant="caption" align="center" color={pal.textSecondary}>
+                  {t.moon.hint}
+                </AppText>
+              </Glass>
+            </Animated.View>
+          )}
 
           <Animated.View entering={FadeInDown.delay(150).duration(700)} style={styles.hero}>
             {isBedtime ? (
@@ -67,6 +85,14 @@ export default function Home() {
                 <AppText variant="caption" align="center" color={pal.textSecondary}>
                   {f(t.home.untilBed, { time: formatClock(bed) })}
                 </AppText>
+                {blockingEnabled && blocking.isAvailable() && (
+                  <View style={styles.phoneSleeps}>
+                    <PhoneSleepIcon size={16} color={pal.accent} />
+                    <AppText style={{ fontSize: 14 }} color={pal.textSecondary}>
+                      {f(t.home.phoneSleeps, { time: formatClock(bed) })}
+                    </AppText>
+                  </View>
+                )}
               </>
             )}
           </Animated.View>
@@ -155,6 +181,7 @@ const styles = StyleSheet.create({
   moonWrap: { alignItems: 'center', marginBottom: -56 },
   phase: { marginBottom: space.md },
   hero: { alignItems: 'center', marginBottom: space.xl },
+  phoneSleeps: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
   cards: { gap: space.sm },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, paddingVertical: 18, gap: 10 },
   timeCol: { flexDirection: 'row', alignItems: 'center', gap: 8 },

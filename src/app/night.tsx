@@ -11,6 +11,7 @@ import { fill, useT } from '@/i18n';
 import { haptic } from '@/lib/haptics';
 import { formatClock } from '@/lib/time';
 import { useDayPhase, useNow } from '@/lib/useNow';
+import { blocking } from '@/native/blocking';
 import { useApp } from '@/store/useApp';
 import { fonts, space } from '@/theme';
 
@@ -19,7 +20,7 @@ export default function Night() {
   const { t } = useT();
   const now = useNow(30_000);
   const phase = useDayPhase(now);
-  const { wake, moonPhase, undoBed } = useApp();
+  const { wake, moonPhase, undoBed, blockingEnabled } = useApp();
 
   useEffect(() => {
     if (phase === 'morning') router.replace('/morning');
@@ -39,6 +40,11 @@ export default function Night() {
           <AppText align="center" color="rgba(165,168,240,0.5)" style={styles.wake}>
             {fill(t.night.wakeAt, { time: formatClock(wake) })}
           </AppText>
+          {blockingEnabled && blocking.isAvailable() && (
+            <AppText align="center" color="rgba(165,168,240,0.4)" style={{ marginTop: 10, fontSize: 14 }}>
+              {t.night.phoneAsleep}
+            </AppText>
+          )}
         </Animated.View>
 
         <Pressable

@@ -7,13 +7,13 @@ import { AppText } from '@/components/AppText';
 import { IconButton } from '@/components/Buttons';
 import { Chip } from '@/components/Chip';
 import { Glass } from '@/components/Glass';
-import { BackIcon } from '@/components/Icons';
+import { BackIcon, BellIcon, CallIcon, PhoneSleepIcon } from '@/components/Icons';
+import { NightTimeline } from '@/components/NightTimeline';
 import { SkyBackground } from '@/components/SkyBackground';
+import { TaskPicker } from '@/components/TaskPicker';
 import { MAX_AGE, MIN_AGE } from '@/components/AgeStepper';
 import { fill, formatRange, getDict, useT } from '@/i18n';
-import { AUTO_UNLOCK_MIN } from '@/lib/blocking';
 import { haptic } from '@/lib/haptics';
-import type { TaskType } from '@/lib/morningTask';
 import { cancelReminders, requestReminderPermission, scheduleReminders } from '@/lib/notifications';
 import { sleepGoalForAge } from '@/lib/sleepGoal';
 import { formatClock } from '@/lib/time';
@@ -24,8 +24,6 @@ import { useApp, type Goal } from '@/store/useApp';
 import { fonts, night, radius, space } from '@/theme';
 
 const GOALS: Goal[] = ['energy', 'growth', 'study', 'sport'];
-// Шагомера в браузере нет — на вебе это задание не предлагаем.
-const TASKS: TaskType[] = Platform.OS === 'web' ? ['sky', 'math'] : ['sky', 'math', 'steps'];
 
 export default function Settings() {
   const { t } = useT();
@@ -141,16 +139,7 @@ export default function Settings() {
           </Section>
 
           <Section title={t.task.choose}>
-            <View style={styles.chips}>
-              {TASKS.map((k) => (
-                <Chip
-                  key={k}
-                  label={t.task.names[k]}
-                  selected={app.taskType === k}
-                  onPress={() => app.set({ taskType: k })}
-                />
-              ))}
-            </View>
+            <TaskPicker value={app.taskType} onChange={(taskType) => app.set({ taskType })} />
           </Section>
 
           <Section title={t.settings.plan}>
@@ -218,34 +207,30 @@ export default function Settings() {
   );
 }
 
-// ВРЕМЕННЫЙ блок (этап 2): дизайн — DESIGN_BRIEF.md, раздел 2.
+// Блокировка и будильник (этап 2, DESIGN_BRIEF.md, раздел 2).
 function BlockingSettings() {
-  const { t, f } = useT();
+  const { t } = useT();
   const app = useApp();
   const [msg, setMsg] = useState<string | null>(null);
-  const unlock = formatClock(app.wake + AUTO_UNLOCK_MIN);
-  const rules = f(t.blocking.rules, { bed: formatClock(app.bed), unlock });
+  const native = nativeAvailable();
+  const on = native && app.blockingEnabled;
 
-  if (!nativeAvailable()) {
-    return (
-      <Glass>
-        <AppText variant="caption">{rules}</AppText>
-        <AppText variant="caption" style={{ marginTop: space.sm }} color={night.accent}>
-          {t.blocking.onlyIphone}
-        </AppText>
-      </Glass>
-    );
-  }
-
-  const row = (label: string, on: boolean, onEnable: () => Promise<string>, disabledReason?: string) => (
-    <View style={[styles.row, { marginTop: space.sm }]}>
+  const row = (
+    icon: ReactNode,
+    label: string,
+    enabled: boolean,
+    onEnable: () => Promise<string>,
+    disabledReason?: string,
+  ) => (
+    <View style={[styles.row, styles.featureRow]}>
+      <View style={styles.featureIcon}>{icon}</View>
       <View style={{ flex: 1 }}>
         <AppText style={{ fontSize: 16 }}>{label}</AppText>
-        <AppText variant="caption" style={{ fontSize: 13 }} color={on ? night.accent : undefined}>
-          {disabledReason ?? (on ? t.blocking.on : t.blocking.off)}
+        <AppText variant="caption" style={{ fontSize: 13 }} color={enabled ? night.accent : undefined}>
+          {disabledReason ?? (enabled ? t.blocking.on : t.blocking.off)}
         </AppText>
       </View>
-      {!on && !disabledReason && (
+      {!enabled && !disabledReason && (
         <Pressable
           accessibilityRole="button"
           onPress={async () => {
@@ -265,18 +250,45 @@ function BlockingSettings() {
 
   return (
     <Glass>
-      <AppText variant="caption">{rules}</AppText>
-      {row(
-        t.blocking.blockingRow,
-        app.blockingEnabled,
-        enableBlocking,
-        blocking.isAvailable() ? undefined : t.blocking.onlyIphone,
-      )}
-      {row(
-        t.blocking.alarmRow,
-        app.alarmEnabled,
-        enableAlarm,
-        alarm.isAvailable() ? undefined : t.blocking.alarmUnsupported,
+      <View style={styles.status}>
+        <View style={[styles.statusDot, { backgroundColor: on ? '#8FE0B0' : night.secondary }]} />
+        <AppText style={{ fontFamily: fonts.semibold, fontSize: 14 }} color={on ? night.text : night.secondary}>
+          {!native ? t.blocking.statusWeb : on ? t.blocking.statusOn : t.blocking.statusOff}
+        </AppText>
+      </View>
+
+      <NightTimeline bed={app.bed} wake={app.wake} />
+
+      <View style={styles.always}>
+        <CallIcon />
+        <View style={{ flex: 1 }}>
+          <AppText variant="label" style={{ fontSize: 11 }}>
+            {t.blocking.always}
+          </AppText>
+          <AppText style={{ fontSize: 15, marginTop: 2 }}>{t.blocking.alwaysList}</AppText>
+        </View>
+      </View>
+      <AppText variant="caption" style={{ fontSize: 13, lineHeight: 18, marginTop: space.sm }}>
+        {t.blocking.noSnooze}
+      </AppText>
+
+      {native && (
+        <>
+          {row(
+            <PhoneSleepIcon size={20} />,
+            t.blocking.blockingRow,
+            app.blockingEnabled,
+            enableBlocking,
+            blocking.isAvailable() ? undefined : t.blocking.onlyIphone,
+          )}
+          {row(
+            <BellIcon size={20} />,
+            t.blocking.alarmRow,
+            app.alarmEnabled,
+            enableAlarm,
+            alarm.isAvailable() ? undefined : t.blocking.alarmUnsupported,
+          )}
+        </>
       )}
       {msg && (
         <AppText variant="caption" style={{ marginTop: space.sm }} color={night.accent}>
@@ -357,6 +369,26 @@ const styles = StyleSheet.create({
     borderColor: night.glassBorder,
   },
   reset: { padding: space.md },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: space.md },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  always: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: space.md,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    borderTopColor: night.glassBorder,
+  },
+  featureRow: { marginTop: space.md, gap: 12 },
+  featureIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,184,107,0.14)',
+  },
   enable: {
     height: 38,
     paddingHorizontal: 16,

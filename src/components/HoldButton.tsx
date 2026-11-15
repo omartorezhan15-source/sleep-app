@@ -1,6 +1,12 @@
 import { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { haptic } from '@/lib/haptics';
 import { fonts, night, radius } from '@/theme';
